@@ -49,7 +49,7 @@ typedef struct {
     int active;
 } BunkerBlock;
 
-// Çıkış Fonksiyonu (Tür güncellendi: void *common)
+// Çıkış Fonksiyonu (PSP Home tuşu için)
 int exit_callback(int arg1, int arg2, void *common) {
     sceKernelExitGame();
     return 0;
@@ -342,7 +342,8 @@ int main(void) {
             pspDebugScreenPrintf("         %s NASIL OYNANIR\n\n", menu_selection == 1 ? ">" : " ");
             pspDebugScreenPrintf("         %s CIKIS\n\n\n", menu_selection == 2 ? ">" : " ");
             
-            pspDebugScreenPrintf("       [Yukari/Asagi]: Secim   [X]: Onayla\n");
+            pspDebugScreenPrintf("       [Yukari/Asagi]: Secim   [X]: Onayla\n\n\n\n");
+            pspDebugScreenPrintf(" 2026 KGAMER                        Space Invaders PSP 1.0 \n");
         } 
         else if (state == STATE_HELP) {
             pspDebugScreenPrintf("\n       === NASIL OYNANIR ===\n\n");
