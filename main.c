@@ -49,7 +49,7 @@ typedef struct {
     int active;
 } BunkerBlock;
 
-// Çıkış Fonksiyonu (PSP Home tuşu için)
+// Exit callback for PSP Home button
 int exit_callback(int arg1, int arg2, void *common) {
     sceKernelExitGame();
     return 0;
@@ -84,8 +84,9 @@ int main(void) {
     FireMode fire_mode = FIRE_MODE_SEMI_AUTO;
     int macrofire_delay = 0;
 
-    #define ROWS 5
-    #define COLS 11
+    // Kompakt ve yakın düzen: 3 Satır, 7 Sütun (Toplam 21 Uzaylı)
+    #define ROWS 3
+    #define COLS 7
     Alien aliens[ROWS][COLS];
     int score = 0;
     int lives = 3;
@@ -124,10 +125,11 @@ int main(void) {
                     fire_mode = FIRE_MODE_SEMI_AUTO;
                     macrofire_delay = 0;
                     
+                    // Uzaylıları oyuncuya daha yakın yerleştir
                     for (int r = 0; r < ROWS; r++) {
                         for (int c = 0; c < COLS; c++) {
-                            aliens[r][c].x = 40 + c * 35;
-                            aliens[r][c].y = 35 + r * 18;
+                            aliens[r][c].x = 100 + c * 40;
+                            aliens[r][c].y = 50 + r * 20;
                             aliens[r][c].width = 14;
                             aliens[r][c].height = 10;
                             aliens[r][c].active = 1;
@@ -270,7 +272,7 @@ int main(void) {
             for (int r = 0; r < ROWS; r++) {
                 for (int c = 0; c < COLS; c++) {
                     if (!aliens[r][c].active) continue;
-                    if (aliens[r][c].x > SCREEN_WIDTH - 30 || aliens[r][c].x < 10) {
+                    if (aliens[r][c].x > SCREEN_WIDTH - 40 || aliens[r][c].x < 20) {
                         edge_hit = 1;
                     }
                 }
@@ -283,8 +285,8 @@ int main(void) {
                     remaining_aliens++;
 
                     if (edge_hit) aliens[r][c].dir *= -1;
-                    aliens[r][c].x += 0.5f * aliens[r][c].dir;
-                    if (edge_hit) aliens[r][c].y += 6.0f;
+                    aliens[r][c].x += 0.6f * aliens[r][c].dir;
+                    if (edge_hit) aliens[r][c].y += 4.0f;
 
                     if (aliens[r][c].y >= player.y - 5) {
                         state = STATE_GAMEOVER;
@@ -338,34 +340,36 @@ int main(void) {
             pspDebugScreenPrintf("       *        PSP SPACE INVADERS        *\n");
             pspDebugScreenPrintf("       ====================================\n\n\n");
             
-            pspDebugScreenPrintf("         %s OYUNA BASLA\n\n", menu_selection == 0 ? ">" : " ");
-            pspDebugScreenPrintf("         %s NASIL OYNANIR\n\n", menu_selection == 1 ? ">" : " ");
-            pspDebugScreenPrintf("         %s CIKIS\n\n\n", menu_selection == 2 ? ">" : " ");
+            pspDebugScreenPrintf("         %s START GAME\n\n", menu_selection == 0 ? ">" : " ");
+            pspDebugScreenPrintf("         %s HOW TO PLAY\n\n", menu_selection == 1 ? ">" : " ");
+            pspDebugScreenPrintf("         %s EXIT\n\n\n", menu_selection == 2 ? ">" : " ");
             
-            pspDebugScreenPrintf("       [Yukari/Asagi]: Secim   [X]: Onayla\n\n\n\n");
+            pspDebugScreenPrintf("       [Up/Down]: Select   [X]: Confirm\n\n\n\n");
             pspDebugScreenPrintf(" 2026 KGAMER                        Space Invaders PSP 1.0 \n");
         } 
         else if (state == STATE_HELP) {
-            pspDebugScreenPrintf("\n       === NASIL OYNANIR ===\n\n");
-            pspDebugScreenPrintf("       - 55 Orijinal Uzayli (5x11 Duzen)\n");
-            pspDebugScreenPrintf("       - Sol/Sag: Hareket  |  X: Tekli Ates\n");
-            pspDebugScreenPrintf("       - [Ucgen]: Ates Modunu Degistir (Semi / Auto / Macro)\n");
-            pspDebugScreenPrintf("       - [START]: Oyunu Duraklat / Ana Menuye Don\n");
-            pspDebugScreenPrintf("       - Parcalanan Siperler ve 3 Can Sistemi.\n\n");
-            pspDebugScreenPrintf("       [O / X] Geri Don\n");
+            pspDebugScreenPrintf("\n       === HOW TO PLAY ===\n\n");
+            pspDebugScreenPrintf("       - Compact Area: 21 Aliens (3x7 Grid, Closer)\n");
+            pspDebugScreenPrintf("       - Left/Right: Move  |  X: Shoot\n");
+            pspDebugScreenPrintf("       - [Triangle]: Change Fire Mode (Semi / Auto / Macro)\n");
+            pspDebugScreenPrintf("       - [START]: Pause / Return to Menu\n");
+            pspDebugScreenPrintf("       - Destructible bunkers and 3 lives system.\n\n");
+            pspDebugScreenPrintf("       [O / X] Go Back\n");
         }
         else if (state == STATE_PLAYING) {
             const char* mode_name = "Semi-Auto";
             if (fire_mode == FIRE_MODE_AUTO) mode_name = "Auto";
             else if (fire_mode == FIRE_MODE_MACROFIRE) {
-                if (macrofire_delay > 0) mode_name = "Macro(Isiniyor)";
-                else mode_name = "Macrofire(OTO)";
+                if (macrofire_delay > 0) mode_name = "Macro(Warming)";
+                else mode_name = "Macrofire(AUTO)";
             }
 
-            pspDebugScreenPrintf("Skor: %-3d | Can: %d | Mod: %s\n\n", score, lives, mode_name);
+            pspDebugScreenPrintf("Score: %-3d | Lives: %d | Mode: %s\n\n", score, lives, mode_name);
 
-            for (int y = 0; y < 27; y++) {
-                for (int x = 0; x < 60; x++) {
+            // Daha küçük / kompakt bir oynanış alanı (örneğin ortaya odaklı dar alan)
+            for (int y = 0; y < 24; y++) {
+                pspDebugScreenPrintf("    "); // Sol boşluk (daraltılmış alan)
+                for (int x = 10; x < 50; x++) {
                     char ch = ' ';
                     
                     int px = (int)(player.x / 8);
@@ -410,27 +414,27 @@ int main(void) {
         else if (state == STATE_PAUSE) {
             pspDebugScreenPrintf("\n\n\n");
             pspDebugScreenPrintf("           #############################\n");
-            pspDebugScreenPrintf("           #        OYUN DURAKLATILDI  #\n");
+            pspDebugScreenPrintf("           #        GAME PAUSED        #\n");
             pspDebugScreenPrintf("           #############################\n\n\n");
-            pspDebugScreenPrintf("         %s OYUNA DEVAM ET\n\n", pause_selection == 0 ? ">" : " ");
-            pspDebugScreenPrintf("         %s ANA MENUYE DON\n\n\n", pause_selection == 1 ? ">" : " ");
-            pspDebugScreenPrintf("       [Yukari/Asagi]: Secim   [X]: Onayla\n");
+            pspDebugScreenPrintf("         %s RESUME GAME\n\n", pause_selection == 0 ? ">" : " ");
+            pspDebugScreenPrintf("         %s MAIN MENU\n\n\n", pause_selection == 1 ? ">" : " ");
+            pspDebugScreenPrintf("       [Up/Down]: Select   [X]: Confirm\n");
         }
         else if (state == STATE_GAMEOVER) {
             pspDebugScreenPrintf("\n\n\n");
             pspDebugScreenPrintf("           #############################\n");
-            pspDebugScreenPrintf("           #        OYUN BITTI!        #\n");
-            pspDebugScreenPrintf("           #       Skorun: %-5d       #\n", score);
+            pspDebugScreenPrintf("           #        GAME OVER!         #\n");
+            pspDebugScreenPrintf("           #       Your Score: %-5d     #\n", score);
             pspDebugScreenPrintf("           #############################\n\n");
-            pspDebugScreenPrintf("       Ana Menuye donmek icin [START] tusuna basin.\n");
+            pspDebugScreenPrintf("       Press [START] to return to Main Menu.\n");
         }
         else if (state == STATE_WIN) {
             pspDebugScreenPrintf("\n\n\n");
             pspDebugScreenPrintf("           #############################\n");
-            pspDebugScreenPrintf("           #     TEBRIKLER KAZANDIN!   #\n");
-            pspDebugScreenPrintf("           #       Skorun: %-5d       #\n", score);
+            pspDebugScreenPrintf("           #      YOU WIN, CONGRATS!   #\n");
+            pspDebugScreenPrintf("           #       Your Score: %-5d     #\n", score);
             pspDebugScreenPrintf("           #############################\n\n");
-            pspDebugScreenPrintf("       Ana Menuye donmek icin [START] tusuna basin.\n");
+            pspDebugScreenPrintf("       Press [START] to return to Main Menu.\n");
         }
 
         sceDisplayWaitVblankStart();
