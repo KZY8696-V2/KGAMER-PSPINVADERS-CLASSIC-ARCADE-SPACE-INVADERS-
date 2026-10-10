@@ -16,9 +16,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build with Make
+      - name: Compile and Package EBOOT.PBP
         run: |
-          make
+          psp-gcc -O2 -G0 -Wall main.c -o space_invaders.elf
+          psp-fixup-imports space_invaders.elf
+          psp-strip space_invaders.elf -o space_invaders_strip.elf
+          prxgen space_invaders_strip.elf space_invaders.prx
+          mksfoex -d "Space Invaders PSP" PARAM.SFO
+          pack-pbp EBOOT.PBP PARAM.SFO NULL NULL NULL NULL NULL NULL space_invaders.prx
+          ls -la EBOOT.PBP
 
       - name: Upload PSP PBP Artifact
         uses: actions/upload-artifact@v4
