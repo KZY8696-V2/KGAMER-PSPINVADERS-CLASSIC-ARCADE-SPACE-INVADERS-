@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 PSP_MODULE_INFO("SpaceInvadersPSP", 0, 1, 1);
-PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_FPU);
+PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 
 #define SCREEN_WIDTH  480
 #define SCREEN_HEIGHT 272
@@ -49,8 +49,8 @@ typedef struct {
     int active;
 } BunkerBlock;
 
-// Çıkış Fonksiyonu (PSP Home tuşu için)
-int exit_callback(int arg1, int arg2, int common) {
+// Çıkış Fonksiyonu (Tür güncellendi: void *common)
+int exit_callback(int arg1, int arg2, void *common) {
     sceKernelExitGame();
     return 0;
 }
@@ -74,7 +74,7 @@ int main(void) {
 
     GameState state = STATE_MENU;
     int menu_selection = 0;
-    int pause_selection = 0; // 0: Devam Et, 1: Ana Menüye Dön
+    int pause_selection = 0; 
 
     Player player = { 220.0f, 240.0f, 20, 10, 1 };
     Bullet bullet = { 0, 0, 0 };
@@ -84,7 +84,6 @@ int main(void) {
     FireMode fire_mode = FIRE_MODE_SEMI_AUTO;
     int macrofire_delay = 0;
 
-    // Orijinal Space Invaders düzeni: 5 Satır, 11 Sütun (Toplam 55 Uzaylı)
     #define ROWS 5
     #define COLS 11
     Alien aliens[ROWS][COLS];
@@ -105,7 +104,6 @@ int main(void) {
         sceCtrlReadBufferPositive(&pad, 1);
         unsigned int pressed = pad.Buttons & ~last_buttons;
 
-        // --- 1. ANA MENÜ KONTROLÜ ---
         if (state == STATE_MENU) {
             if (pressed & PSP_CTRL_UP) {
                 menu_selection--;
@@ -126,7 +124,6 @@ int main(void) {
                     fire_mode = FIRE_MODE_SEMI_AUTO;
                     macrofire_delay = 0;
                     
-                    // 55 Uzaylıyı orijinal düzende yerleştir
                     for (int r = 0; r < ROWS; r++) {
                         for (int c = 0; c < COLS; c++) {
                             aliens[r][c].x = 40 + c * 35;
@@ -138,7 +135,6 @@ int main(void) {
                         }
                     }
 
-                    // Siperleri Başlat
                     int b_idx = 0;
                     int bunker_positions[3] = { 12, 27, 42 };
                     for (int i = 0; i < BUNKER_COUNT; i++) {
@@ -160,15 +156,12 @@ int main(void) {
                 }
             }
         }
-        // --- 2. YARDIM EKRANI KONTROLÜ ---
         else if (state == STATE_HELP) {
             if ((pressed & PSP_CTRL_CIRCLE) || (pressed & PSP_CTRL_CROSS)) {
                 state = STATE_MENU;
             }
         }
-        // --- 3. OYUN İÇİ KONTROLÜ ---
         else if (state == STATE_PLAYING) {
-            // START tuşu ile oyunu duraklat
             if (pressed & PSP_CTRL_START) {
                 pause_selection = 0;
                 state = STATE_PAUSE;
@@ -180,29 +173,26 @@ int main(void) {
             if (player.x < 10) player.x = 10;
             if (player.x > SCREEN_WIDTH - 30) player.x = SCREEN_WIDTH - 30;
 
-            // Üçgen tuşu ile Ateş Modunu Değiştir
             if (pressed & PSP_CTRL_TRIANGLE) {
                 if (fire_mode == FIRE_MODE_SEMI_AUTO) {
                     fire_mode = FIRE_MODE_AUTO;
                 } else if (fire_mode == FIRE_MODE_AUTO) {
                     fire_mode = FIRE_MODE_MACROFIRE;
-                    macrofire_delay = 180; // Macrofire moduna ilk geçişte 3 saniye ısınma süresi
+                    macrofire_delay = 180; 
                 } else {
                     fire_mode = FIRE_MODE_SEMI_AUTO;
                 }
             }
 
-            // Sayaçları azalt
             if (shoot_cooldown > 0) shoot_cooldown--;
             if (macrofire_delay > 0) macrofire_delay--;
 
-            // Ateş Etme Mantığı
             int want_to_shoot = 0;
 
             if (fire_mode == FIRE_MODE_SEMI_AUTO) {
                 if ((pressed & PSP_CTRL_CROSS) && shoot_cooldown == 0) {
                     want_to_shoot = 1;
-                    shoot_cooldown = 90; // 1.5 saniye cooldown
+                    shoot_cooldown = 90; 
                 }
             } 
             else if (fire_mode == FIRE_MODE_AUTO) {
@@ -212,7 +202,7 @@ int main(void) {
             } 
             else if (fire_mode == FIRE_MODE_MACROFIRE) {
                 if (macrofire_delay == 0) {
-                    want_to_shoot = 1; // Tuşa basmadan kendi kendine otomatik ateş eder
+                    want_to_shoot = 1; 
                 }
             }
 
@@ -222,7 +212,6 @@ int main(void) {
                 bullet.active = 1;
             }
 
-            // Oyuncu mermisi hareketi ve Çarpışmaları
             if (bullet.active) {
                 bullet.y -= 8.0f;
                 if (bullet.y < 0) bullet.active = 0;
@@ -241,7 +230,6 @@ int main(void) {
                 }
             }
 
-            // Uzaylı mermisi hareketi ve Çarpışmaları
             if (alien_bullet.active) {
                 alien_bullet.y += 4.0f;
                 if (alien_bullet.y > SCREEN_HEIGHT) alien_bullet.active = 0;
@@ -278,7 +266,6 @@ int main(void) {
                 }
             }
 
-            // Uzaylı hareket mantığı
             int edge_hit = 0;
             for (int r = 0; r < ROWS; r++) {
                 for (int c = 0; c < COLS; c++) {
@@ -317,7 +304,6 @@ int main(void) {
                 state = STATE_WIN;
             }
         }
-        // --- 4. DURAKLATMA (PAUSE) MENÜSÜ KONTROLÜ ---
         else if (state == STATE_PAUSE) {
             if (pressed & PSP_CTRL_UP) {
                 pause_selection--;
@@ -329,13 +315,12 @@ int main(void) {
             }
             if (pressed & PSP_CTRL_CROSS) {
                 if (pause_selection == 0) {
-                    state = STATE_PLAYING; // Oyuna devam et
+                    state = STATE_PLAYING; 
                 } else if (pause_selection == 1) {
-                    state = STATE_MENU; // Ana menüye dön
+                    state = STATE_MENU; 
                 }
             }
         }
-        // --- 5. OYUN BİTTİ VEYA KAZANMA EKRANI ---
         else if (state == STATE_GAMEOVER || state == STATE_WIN) {
             if (pressed & PSP_CTRL_START) {
                 state = STATE_MENU;
@@ -344,7 +329,6 @@ int main(void) {
 
         last_buttons = pad.Buttons;
 
-        // --- EKRANA ÇİZİM (RENDER) ---
         pspDebugScreenClear();
         pspDebugScreenSetXY(0, 0);
 
