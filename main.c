@@ -14,6 +14,7 @@ typedef enum {
     STATE_MENU,
     STATE_HELP,
     STATE_PLAYING,
+    STATE_PAUSE,
     STATE_GAMEOVER,
     STATE_WIN
 } GameState;
@@ -73,6 +74,7 @@ int main(void) {
 
     GameState state = STATE_MENU;
     int menu_selection = 0;
+    int pause_selection = 0; // 0: Devam Et, 1: Ana Menüye Dön
 
     Player player = { 220.0f, 240.0f, 20, 10, 1 };
     Bullet bullet = { 0, 0, 0 };
@@ -166,6 +168,12 @@ int main(void) {
         }
         // --- 3. OYUN İÇİ KONTROLÜ ---
         else if (state == STATE_PLAYING) {
+            // START tuşu ile oyunu duraklat
+            if (pressed & PSP_CTRL_START) {
+                pause_selection = 0;
+                state = STATE_PAUSE;
+            }
+
             if (pad.Buttons & PSP_CTRL_LEFT)  player.x -= 4.0f;
             if (pad.Buttons & PSP_CTRL_RIGHT) player.x += 4.0f;
 
@@ -178,7 +186,7 @@ int main(void) {
                     fire_mode = FIRE_MODE_AUTO;
                 } else if (fire_mode == FIRE_MODE_AUTO) {
                     fire_mode = FIRE_MODE_MACROFIRE;
-                    macrofire_delay = 180; // Macrofire moduna ilk geçişte 3 saniye (180 kare) ısınma süresi
+                    macrofire_delay = 180; // Macrofire moduna ilk geçişte 3 saniye ısınma süresi
                 } else {
                     fire_mode = FIRE_MODE_SEMI_AUTO;
                 }
@@ -309,7 +317,25 @@ int main(void) {
                 state = STATE_WIN;
             }
         }
-        // --- 4. OYUN BİTTİ VEYA KAZANMA EKRANI ---
+        // --- 4. DURAKLATMA (PAUSE) MENÜSÜ KONTROLÜ ---
+        else if (state == STATE_PAUSE) {
+            if (pressed & PSP_CTRL_UP) {
+                pause_selection--;
+                if (pause_selection < 0) pause_selection = 1;
+            }
+            if (pressed & PSP_CTRL_DOWN) {
+                pause_selection++;
+                if (pause_selection > 1) pause_selection = 1;
+            }
+            if (pressed & PSP_CTRL_CROSS) {
+                if (pause_selection == 0) {
+                    state = STATE_PLAYING; // Oyuna devam et
+                } else if (pause_selection == 1) {
+                    state = STATE_MENU; // Ana menüye dön
+                }
+            }
+        }
+        // --- 5. OYUN BİTTİ VEYA KAZANMA EKRANI ---
         else if (state == STATE_GAMEOVER || state == STATE_WIN) {
             if (pressed & PSP_CTRL_START) {
                 state = STATE_MENU;
@@ -339,7 +365,7 @@ int main(void) {
             pspDebugScreenPrintf("       - 55 Orijinal Uzayli (5x11 Duzen)\n");
             pspDebugScreenPrintf("       - Sol/Sag: Hareket  |  X: Tekli Ates\n");
             pspDebugScreenPrintf("       - [Ucgen]: Ates Modunu Degistir (Semi / Auto / Macro)\n");
-            pspDebugScreenPrintf("       - Macrofire: Kendi ates eder (3sn isinma suresi var)\n");
+            pspDebugScreenPrintf("       - [START]: Oyunu Duraklat / Ana Menuye Don\n");
             pspDebugScreenPrintf("       - Parcalanan Siperler ve 3 Can Sistemi.\n\n");
             pspDebugScreenPrintf("       [O / X] Geri Don\n");
         }
@@ -395,6 +421,15 @@ int main(void) {
                 }
                 pspDebugScreenPrintf("\n");
             }
+        }
+        else if (state == STATE_PAUSE) {
+            pspDebugScreenPrintf("\n\n\n");
+            pspDebugScreenPrintf("           #############################\n");
+            pspDebugScreenPrintf("           #        OYUN DURAKLATILDI  #\n");
+            pspDebugScreenPrintf("           #############################\n\n\n");
+            pspDebugScreenPrintf("         %s OYUNA DEVAM ET\n\n", pause_selection == 0 ? ">" : " ");
+            pspDebugScreenPrintf("         %s ANA MENUYE DON\n\n\n", pause_selection == 1 ? ">" : " ");
+            pspDebugScreenPrintf("       [Yukari/Asagi]: Secim   [X]: Onayla\n");
         }
         else if (state == STATE_GAMEOVER) {
             pspDebugScreenPrintf("\n\n\n");
