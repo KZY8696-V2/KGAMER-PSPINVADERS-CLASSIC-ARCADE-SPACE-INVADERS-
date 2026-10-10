@@ -1,0 +1,27 @@
+name: Build PSP Space Invaders
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build with Make
+        run: |
+          make
+
+      - name: Upload PSP PBP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: space_invaders_pbp
+          path: space_invaders.pbp
