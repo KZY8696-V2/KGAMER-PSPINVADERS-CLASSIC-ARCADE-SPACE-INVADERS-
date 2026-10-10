@@ -76,7 +76,7 @@ int main(void) {
     int menu_selection = 0;
     int pause_selection = 0; 
 
-    Player player = { 220.0f, 240.0f, 20, 10, 1 };
+    Player player = { 200.0f, 210.0f, 20, 10, 1 };
     Bullet bullet = { 0, 0, 0 };
     Bullet alien_bullet = { 0, 0, 0 };
     
@@ -84,7 +84,6 @@ int main(void) {
     FireMode fire_mode = FIRE_MODE_SEMI_AUTO;
     int macrofire_delay = 0;
 
-    // Kompakt ve yakın düzen: 3 Satır, 7 Sütun (Toplam 21 Uzaylı)
     #define ROWS 3
     #define COLS 7
     Alien aliens[ROWS][COLS];
@@ -116,7 +115,8 @@ int main(void) {
             }
             if (pressed & PSP_CTRL_CROSS) {
                 if (menu_selection == 0) {
-                    player.x = 220.0f;
+                    player.x = 200.0f;
+                    player.y = 210.0f;
                     score = 0;
                     lives = 3;
                     bullet.active = 0;
@@ -125,11 +125,11 @@ int main(void) {
                     fire_mode = FIRE_MODE_SEMI_AUTO;
                     macrofire_delay = 0;
                     
-                    // Uzaylıları oyuncuya daha yakın yerleştir
+                    // Uzaylıların başlangıç pozisyonu (oyun alanına göre ayarlandı)
                     for (int r = 0; r < ROWS; r++) {
                         for (int c = 0; c < COLS; c++) {
-                            aliens[r][c].x = 100 + c * 40;
-                            aliens[r][c].y = 50 + r * 20;
+                            aliens[r][c].x = 130 + c * 34;
+                            aliens[r][c].y = 50 + r * 16;
                             aliens[r][c].width = 14;
                             aliens[r][c].height = 10;
                             aliens[r][c].active = 1;
@@ -137,13 +137,14 @@ int main(void) {
                         }
                     }
 
+                    // Siperler (Bunker) yerleşimi
                     int b_idx = 0;
-                    int bunker_positions[3] = { 12, 27, 42 };
+                    int bunker_positions[3] = { 16, 26, 36 };
                     for (int i = 0; i < BUNKER_COUNT; i++) {
                         int bx = bunker_positions[i];
                         for (int b = 0; b < BLOCKS_PER_BUNKER; b++) {
                             bunkers[b_idx].x = bx + (b % 3);
-                            bunkers[b_idx].y = 20 + (b / 3);
+                            bunkers[b_idx].y = 17 + (b / 3);
                             bunkers[b_idx].health = 3;
                             bunkers[b_idx].active = 1;
                             b_idx++;
@@ -172,8 +173,9 @@ int main(void) {
             if (pad.Buttons & PSP_CTRL_LEFT)  player.x -= 4.0f;
             if (pad.Buttons & PSP_CTRL_RIGHT) player.x += 4.0f;
 
-            if (player.x < 10) player.x = 10;
-            if (player.x > SCREEN_WIDTH - 30) player.x = SCREEN_WIDTH - 30;
+            // Oyun alanı sınırları içinde kalması için (x: 100 ile 360 arası)
+            if (player.x < 105) player.x = 105;
+            if (player.x > 355) player.x = 355;
 
             if (pressed & PSP_CTRL_TRIANGLE) {
                 if (fire_mode == FIRE_MODE_SEMI_AUTO) {
@@ -209,14 +211,14 @@ int main(void) {
             }
 
             if (want_to_shoot && !bullet.active) {
-                bullet.x = player.x + player.width / 2;
+                bullet.x = player.x + 8.0f;
                 bullet.y = player.y;
                 bullet.active = 1;
             }
 
             if (bullet.active) {
                 bullet.y -= 8.0f;
-                if (bullet.y < 0) bullet.active = 0;
+                if (bullet.y < 30) bullet.active = 0;
 
                 int bx = (int)(bullet.x / 8);
                 int by = (int)(bullet.y / 10);
@@ -234,7 +236,7 @@ int main(void) {
 
             if (alien_bullet.active) {
                 alien_bullet.y += 4.0f;
-                if (alien_bullet.y > SCREEN_HEIGHT) alien_bullet.active = 0;
+                if (alien_bullet.y > 230) alien_bullet.active = 0;
 
                 int abx = (int)(alien_bullet.x / 8);
                 int aby = (int)(alien_bullet.y / 10);
@@ -262,7 +264,7 @@ int main(void) {
                 int ar = rand() % ROWS;
                 int ac = rand() % COLS;
                 if (aliens[ar][ac].active) {
-                    alien_bullet.x = aliens[ar][ac].x + aliens[ar][ac].width / 2;
+                    alien_bullet.x = aliens[ar][ac].x + 6.0f;
                     alien_bullet.y = aliens[ar][ac].y;
                     alien_bullet.active = 1;
                 }
@@ -272,7 +274,7 @@ int main(void) {
             for (int r = 0; r < ROWS; r++) {
                 for (int c = 0; c < COLS; c++) {
                     if (!aliens[r][c].active) continue;
-                    if (aliens[r][c].x > SCREEN_WIDTH - 40 || aliens[r][c].x < 20) {
+                    if (aliens[r][c].x > 340 || aliens[r][c].x < 120) {
                         edge_hit = 1;
                     }
                 }
@@ -285,7 +287,7 @@ int main(void) {
                     remaining_aliens++;
 
                     if (edge_hit) aliens[r][c].dir *= -1;
-                    aliens[r][c].x += 0.6f * aliens[r][c].dir;
+                    aliens[r][c].x += 0.5f * aliens[r][c].dir;
                     if (edge_hit) aliens[r][c].y += 4.0f;
 
                     if (aliens[r][c].y >= player.y - 5) {
@@ -349,7 +351,7 @@ int main(void) {
         } 
         else if (state == STATE_HELP) {
             pspDebugScreenPrintf("\n       === HOW TO PLAY ===\n\n");
-            pspDebugScreenPrintf("       - Compact Area: 21 Aliens (3x7 Grid, Closer)\n");
+            pspDebugScreenPrintf("       - Centered Compact Area: 21 Aliens (3x7 Grid)\n");
             pspDebugScreenPrintf("       - Left/Right: Move  |  X: Shoot\n");
             pspDebugScreenPrintf("       - [Triangle]: Change Fire Mode (Semi / Auto / Macro)\n");
             pspDebugScreenPrintf("       - [START]: Pause / Return to Menu\n");
@@ -364,12 +366,12 @@ int main(void) {
                 else mode_name = "Macrofire(AUTO)";
             }
 
-            pspDebugScreenPrintf("Score: %-3d | Lives: %d | Mode: %s\n\n", score, lives, mode_name);
+            pspDebugScreenPrintf(" Score: %-3d | Lives: %d | Mode: %s\n\n", score, lives, mode_name);
 
-            // Daha küçük / kompakt bir oynanış alanı (örneğin ortaya odaklı dar alan)
-            for (int y = 0; y < 24; y++) {
-                pspDebugScreenPrintf("    "); // Sol boşluk (daraltılmış alan)
-                for (int x = 10; x < 50; x++) {
+            // Ekranın ortasında yer alan kompakt oyun alanı (satır bazlı çizim)
+            for (int y = 3; y < 25; y++) {
+                pspDebugScreenPrintf("            "); // Sol boşluk ile tam ortalama (12 boşluk)
+                for (int x = 13; x < 47; x++) {
                     char ch = ' ';
                     
                     int px = (int)(player.x / 8);
